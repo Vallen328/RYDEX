@@ -65,11 +65,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             return true
         },
         async jwt({token, user}){         //token is basically that thing which was generated after login(automatically) and in this token, we input the user details
-            token.name = user.name,
-            token.id = user.id,
-            token.email = user.email,
-            token.role = user.role
-
+            if(user){
+                token.name = user.name,
+                token.id = user.id,
+                token.email = user.email,
+                token.role = user.role
+            }
             return token
         },
         async session({token, session}){
@@ -92,3 +93,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     secret: process.env.AUTH_SECRET
 })
+
+
+    
