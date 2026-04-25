@@ -21,7 +21,9 @@ function AuthModal({open, onClose} : propType) {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState("")
-  // //Frontend mein session ka data, that we can access by 
+  const [otp, setOtp] = useState(["","","","","",""])
+
+  //Frontend mein session ka data, that we can access by 
   const session = useSession()
   console.log(session) 
 
@@ -29,7 +31,23 @@ function AuthModal({open, onClose} : propType) {
     setLoading(true)
     try{
       const {data} = await axios.post("/api/auth/register", {name, email, password})
+      setErr("")
+      setStep("otp")
+      setLoading(false)
+    }catch(error : any){
+      setLoading(false)
+      setErr(error.response.data.message ?? "Something went wrong!")
+    }
+  }
+
+  const handleVerifyEmail = async() => {
+    setLoading(true)
+    try{
+      const {data} = await axios.post("/api/auth/verify-email", {email, otp: otp.join("")})
       console.log(data)
+      setOtp(["","","","","",""])
+      setErr("")
+      setStep("login")
       setLoading(false)
     }catch(error : any){
       setLoading(false)
@@ -50,6 +68,19 @@ function AuthModal({open, onClose} : propType) {
 
   const handleGoogleLogin = async() => {
     await signIn("google")
+  }
+
+  const handleChangeOtp=(index:number, value:string)=>{
+    if(!/^[0-9]?$/.test(value)) return             // We have written a RE if we don't have 0-9 then we will return it under value
+    const updated=[...otp]  //the previous values of otp, we will put it inside of updated
+    updated[index] = value
+    setOtp(updated)
+    if(value && index < otp.length-1){              //Suppose we are on first box, so u move ahead as u insert values but if index < otp.length - 1 that is the 6th one, so we don't move ahead
+      document.getElementById(`otp-${index + 1}`)?.focus()
+    }
+    if(!value && index > 0){
+      document.getElementById(`otp-${index - 1}`)?.focus()
+    }
   }
 
   
@@ -107,7 +138,7 @@ function AuthModal({open, onClose} : propType) {
                         <Lock size={18} className='text-gray-500' />
                         <input type='password' placeholder='Password' className='w-full bg-transparent outline-none text-sm' onChange = {(e) => setPassword(e.target.value)} value = {password} />
                       </div>
-                      <button className='w-full h-11 rounded-xl bg-black text-white font-semibold hover:bg-gray-900 transition' onClick = {handleLogin}>{!loading ? "Login" : <CircleDashed size = {18} color = 'white' className='animate-spin' />}</button>
+                      <button className='w-full h-11 rounded-xl bg-black text-white font-semibold hover:bg-gray-900 transition flex justify-center items-center' onClick = {handleLogin}>{!loading ? "Login" : <CircleDashed size = {18} color = 'white' className='animate-spin' />}</button>
                     </div>
                     <p className='mt-6 text-center text-sm text-gray-500'> Don&apos;t have an account? <span onClick = {() => setStep("signup")} className='text-black font-medium hover:underline'>Sign Up</span></p>
                   </motion.div>
@@ -135,10 +166,36 @@ function AuthModal({open, onClose} : propType) {
 
                       {err && <p className='text-red-500'>*{err}</p>}
 
-                      <button className='w-full h-11 rounded-xl bg-black text-white font-semibold hover:bg-gray-900 transition flex justify-center items-center' disabled={loading} onClick = {handleSignUp}>{!loading ? "Sign Up" : <CircleDashed size = {18} color = 'white' className='animate-spin' />}</button>
+                      <button className='w-full h-11 rounded-xl bg-black text-white font-semibold hover:bg-gray-900 transition flex justify-center items-center' disabled={loading} onClick = {handleSignUp}>{!loading ? "Send OTP" : <CircleDashed size = {18} color = 'white' className='animate-spin' />}</button>
                     </div>
                     <p className='mt-6 text-center text-sm text-gray-500'> Already have an account? <span onClick = {() => setStep("login")} className='text-black font-medium hover:underline'>Login</span></p>
                   </motion.div>
+                  )}
+                  {step == "otp" && (
+                    <motion.div
+                      key="otp"
+                      initial = {{ opacity: 0, x: 20 }}
+                      animate = {{ opacity: 1, x: 0 }}
+                      exit = {{ opacity: 0, x: -20 }}   //We use exit directly as we have already put animatepresence
+                    >
+                      <h2 className='text-xl font-semibold'>Verify Email</h2>
+
+                      <div className='mt-6 flex justify-between gap-2'>
+                        {otp.map((digit, i) => (
+                          <input 
+                          key={i}
+                          id={`otp-${i}`}
+                          value={digit}
+                          maxLength={1}
+                          className='w-10 h-12 sm:w-12 text-center text-lg font-semibold rounded-xl bg-white border border-black/20 outline-none'
+                          onChange={(e) => handleChangeOtp(i, e.target.value)}
+                        />
+                        ))}
+                      </div>
+                      {err && <p className='text-red-500'>*{err}</p>}
+                      <button className='mt-6 w-full h-11 rounded-xl bg-black text-white font-semibold hover:bg-gray-900 flex justify-center items-center transition' onClick = {handleVerifyEmail}>{!loading ? "Verify OTP and Create Account" : <CircleDashed size = {18} color = 'white' className='animate-spin' />}</button>
+
+                    </motion.div>
                   )}
                 </div>
                   
