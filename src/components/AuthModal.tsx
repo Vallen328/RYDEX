@@ -34,7 +34,7 @@ function AuthModal({open, onClose} : propType) {
       setErr("")
       setStep("otp")
       setLoading(false)
-    }catch(error : any){
+    }catch(error: any){
       setLoading(false)
       setErr(error.response.data.message ?? "Something went wrong!")
     }
